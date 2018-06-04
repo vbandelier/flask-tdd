@@ -34,13 +34,18 @@
     {% endif %}
     <ul class="entries">
       {% for entry in entries %}
-        <li><h2>{{ entry.title }}</h2>{{ entry.text|safe }}</li>
+        <li class="entry">
+          <h2 id="{{ entry.id }}">{{ entry.title }}</h2>
+          {{ entry.text|safe }}
+        </li>
       {% else %}
         <li><em>No entries yet. Add some!</em></li>
       {% endfor %}
     </ul>
 
   </div>
-
+  <script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+  <script src="//stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="{{url_for('static', filename='main.js') }}"></script>
 </body>
 </html>
