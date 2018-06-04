@@ -1,15 +1,16 @@
 import unittest
 import os
-import tempfile
 import json
 
-import app
+from app import app, db
+
+TEST_DB = 'test.db'
 
 class BasicTestCase(unittest.TestCase):
 
     def test_index(self):
         """Initial test: Ensure flask was set up correctly."""
-        tester = app.app.test_client(self)
+        tester = app.test_client(self)
         response = tester.get('/', content_type='html/text')
         self.assertEqual(response.status_code, 200)
 
@@ -21,15 +22,15 @@ class BasicTestCase(unittest.TestCase):
 class FlaskTestCase(unittest.TestCase):
     def setUp(self):
         """Set up a blank temp database before each test."""
-        self.db_fd, app.app.config['DATABASE'] = tempfile.mkstemp()
-        app.app.config['TESTING'] = True
-        self.app = app.app.test_client()
-        app.init_db()
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        app.config['TESTING'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, TEST_DB)
+        self.app = app.test_client()
+        db.creat_all()
 
     def tearDown(self):
         """Destroy blank temp database after each test."""
-        os.close(self.db_fd)
-        os.unlink(app.app.config['DATABASE'])
+        db.drop_all()
 
     def login(self, username, password):
         """Login helper function."""
@@ -46,36 +47,36 @@ class FlaskTestCase(unittest.TestCase):
     def test_empty_db(self):
         """Ensure database is blank."""
         rv = self.app.get('/')
-        assert b'No entries yet. Add some!' in rv.data
+        self.assertIn(b'No entries yet. Add some!', rv.data)
 
     def test_login_logout(self):
         """Test login and logout using helper functions."""
         rv = self.login(
-            app.app.config['USERNAME'],
-            app.app.config['PASSWORD']
+            app.config['USERNAME'],
+            app.config['PASSWORD']
         )
-        assert b'You were logged in' in rv.data
+        self.assertIn(b'You were logged in', rv.data)
         rv = self.logout()
-        assert b'You were logged out' in rv.data
+        self.assertIn(b'You were logged out', rv.data)
         rv = self.login(
-            app.app.config['USERNAME'],
-            app.app.config['PASSWORD'] + 'x'
+            app.config['USERNAME'],
+            app.config['PASSWORD'] + 'x'
         )
-        assert b'Invalid password' in rv.data
+        self.assertIn(b'Invalid password', rv.data)
 
     def test_messages(self):
         """Ensure that a user can post messages."""
         self.login(
-            app.app.config['USERNAME'],
-            app.app.config['PASSWORD']
+            app.config['USERNAME'],
+            app.config['PASSWORD']
         )
         rv = self.app.post('/add', data=dict(
             title='<Hello>',
             text='<strong>HTML</strong> allowed here'
         ), follow_redirects=True)
-        assert b'No entries yet. Add some!' not in rv.data
-        assert b'&lt;Hello&gt;' in rv.data
-        assert b'<strong>HTML</strong> allowed here' in rv.data
+        self.assertNotIn(b'No entries yet. Add some!', rv.data)
+        self.assertIn(b'&lt;Hello&gt;', rv.data)
+        self.assertIn(b'<strong>HTML</strong> allowed here', rv.data)
 
     def test_delete_message(self):
         """Ensure the messages are being deleted."""
