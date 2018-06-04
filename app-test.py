@@ -16,7 +16,7 @@ class BasicTestCase(unittest.TestCase):
 
     def test_database(self):
         """Initial test: Ensure that the database exists."""
-        tester = os.path.exists('flask.db')
+        tester = os.path.exists('flaskr.db')
         self.assertEqual(tester, True)
 
 class FlaskTestCase(unittest.TestCase):
@@ -26,7 +26,7 @@ class FlaskTestCase(unittest.TestCase):
         app.config['TESTING'] = True
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, TEST_DB)
         self.app = app.test_client()
-        db.creat_all()
+        db.create_all()
 
     def tearDown(self):
         """Destroy blank temp database after each test."""

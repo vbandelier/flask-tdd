@@ -27,12 +27,12 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 db = SQLAlchemy(app)
 
-from models import Flaskr
+import models
 
 @app.route('/')
 def index():
     """Searches the database for entries, then plisplays them."""
-    entries = Flaskr.query.all()
+    entries = db.session.query(models.Flaskr)
     return render_template('index.html', entries=entries)
 
 @app.route('/add', methods=['POST'])
@@ -40,7 +40,7 @@ def add_entry():
     """Add new post to database."""
     if not session.get('logged_in'):
         abort(401)
-    new_entry = Flaskr(request.form['title'], request.form['text'])
+    new_entry = models.Flaskr(request.form['title'], request.form['text'])
     db.session.add(new_entry)
     db.session.commit()
     flash('New entry was successfully posted')
@@ -73,7 +73,7 @@ def delete_entry(post_id):
     """Delete post from database"""
     result = {'status': 0, 'message': 'Error'}
     try:
-        Flaskr.query.filter_by(post_id=post_id).delete()
+        db.session.query(models.Flaskr).filter_by(post_id=new_id).delete()
         db.session.commit()
         result = {'status': 1, 'message': 'Post Deleted'}
         flash('The entry was deleted.')
@@ -81,6 +81,13 @@ def delete_entry(post_id):
         result = {'status': 0, 'message': repr(e)}
     return jsonify(result)
 
+@app.route('/serach/', methods=['GET'])
+def search():
+    query = request.args.get('query')
+    entries = db.session.query(models.Flaskr)
+    if query:
+        return render_template('search.html', entries=entries, query=query)
+    return render_template('search.html')
+
 if __name__ == '__main__':
-    init_db()
     app.run()
