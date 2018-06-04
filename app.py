@@ -68,14 +68,15 @@ def logout():
     flash('You were logged out')
     return redirect(url_for('index'))
 
-@app.route('/delete/<post_id>', methods=['GET'])
+@app.route('/delete/<int:post_id>', methods=['GET'])
 def delete_entry(post_id):
-    """Delete post from database"""
+    """Deletes post from database."""
     result = {'status': 0, 'message': 'Error'}
     try:
+        new_id = post_id
         db.session.query(models.Flaskr).filter_by(post_id=new_id).delete()
         db.session.commit()
-        result = {'status': 1, 'message': 'Post Deleted'}
+        result = {'status': 1, 'message': "Post Deleted"}
         flash('The entry was deleted.')
     except Exception as e:
         result = {'status': 0, 'message': repr(e)}
